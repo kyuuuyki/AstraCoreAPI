@@ -1,0 +1,77 @@
+{
+  "pins" : [
+    {
+      "identity" : "alamofire",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/Alamofire/Alamofire.git",
+      "state" : {
+        "revision" : "354dda32d89fc8cd4f5c46487f64957d355f53d8",
+        "version" : "5.6.1"
+      }
+    },
+    {
+      "identity" : "astracoremodels",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/kyuuuyki/AstraCoreModels.git",
+      "state" : {
+        "branch" : "main",
+        "revision" : "a2293bd389d5993024e8d2608c23e4641c377cd9"
+      }
+    },
+    {
+      "identity" : "keychain-swift",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/evgenyneu/keychain-swift.git",
+      "state" : {
+        "revision" : "d108a1fa6189e661f91560548ef48651ed8d93b9",
+        "version" : "20.0.0"
+      }
+    },
+    {
+      "identity" : "kyugenericextensions",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/kyuuuyki/KyuGenericExtensions.git",
+      "state" : {
+        "branch" : "main",
+        "revision" : "544525ab9843bc580802e8aba14503e0160d923a"
+      }
+    },
+    {
+      "identity" : "kyunetworkextensions",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/kyuuuyki/KyuNetworkExtensions.git",
+      "state" : {
+        "branch" : "main",
+        "revision" : "5ad8f5ded0c4c4d99123fa012f1a5167b632f3f9"
+      }
+    },
+    {
+      "identity" : "moya",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/Moya/Moya.git",
+      "state" : {
+        "revision" : "9b906860e3c3c09032879465c471e6375829593f",
+        "version" : "15.0.0"
+      }
+    },
+    {
+      "identity" : "reactiveswift",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/ReactiveCocoa/ReactiveSwift.git",
+      "state" : {
+        "revision" : "c43bae3dac73fdd3cb906bd5a1914686ca71ed3c",
+        "version" : "6.7.0"
+      }
+    },
+    {
+      "identity" : "rxswift",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/ReactiveX/RxSwift.git",
+      "state" : {
+        "revision" : "b4307ba0b6425c0ba4178e138799946c3da594f8",
+        "version" : "6.5.0"
+      }
+    }
+  ],
+  "version" : 2
+}
