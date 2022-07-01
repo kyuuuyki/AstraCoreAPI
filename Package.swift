@@ -31,6 +31,10 @@ let package = Package(
 			url: "https://github.com/firebase/firebase-ios-sdk.git",
 			from: "8.10.0"
 		),
+		.package(
+			url: "https://github.com/google/GoogleSignIn-iOS.git",
+			from: "6.2.0"
+		),
 	],
 	targets: [
 		.target(
@@ -53,6 +57,14 @@ let package = Package(
 				.product(
 					name: "FirebaseCrashlytics",
 					package: "firebase-ios-sdk"
+				),
+				.product(
+					name: "FirebaseFirestoreSwift-Beta",
+					package: "firebase-ios-sdk"
+				),
+				.product(
+					name: "GoogleSignIn",
+					package: "GoogleSignIn-iOS"
 				),
 			]
 		),

@@ -8,29 +8,32 @@ import Foundation
 import KyuNetworkExtensions
 import Moya
 
-struct MediaLibraryService {
+public struct MediaLibraryService: MediaLibraryServiceProtocol {
+	public static var moduleName: String = "AstraCoreAPI.MediaLibraryService"
+	
 	let apiKey: String
 	let provider: KSPNetworkProvider<
 		MediaLibraryAPITarget,
 		MediaLibraryServiceErrorDTO
 	>
 	
-	init(apiKey: String) {
+	public init(apiKey: String) {
 		let authPlugin = AccessTokenPlugin { _ in apiKey }
 		let configuration = KSPNetworkConfiguration(stubBehavior: .never, plugins: [authPlugin])
-		
-		self.apiKey = apiKey
-		self.provider = KSPNetworkProvider<
+		let provider = KSPNetworkProvider<
 			MediaLibraryAPITarget,
 			MediaLibraryServiceErrorDTO
 		>(
 			configuration: configuration,
 			configurator: nil
 		)
+		
+		self.apiKey = apiKey
+		self.provider = provider
 	}
 }
 
-extension MediaLibraryService: MediaLibraryServiceProtocol {
+public extension MediaLibraryService {
 	func astromonyPictureOfTheDay(
 		date: Date,
 		completion: @escaping (Result<MediaLibraryAPODItemProtocol?, Error>) -> Void
@@ -38,9 +41,6 @@ extension MediaLibraryService: MediaLibraryServiceProtocol {
 		provider.requestObject(
 			type: MediaLibraryAPODItemDTO.self,
 			route: .apodByDate(apiKey: apiKey, date: date),
-			responseHandler: { response in
-				AstraCoreAPI.coreAPI().updateRateLimitRemaining(response: response)
-			},
 			completion: { result in
 				switch result {
 				case .success(let item):
@@ -63,9 +63,6 @@ extension MediaLibraryService: MediaLibraryServiceProtocol {
 		provider.requestObjects(
 			type: MediaLibraryAPODItemDTO.self,
 			route: .apodByCount(apiKey: apiKey, count: count),
-			responseHandler: { response in
-				AstraCoreAPI.coreAPI().updateRateLimitRemaining(response: response)
-			},
 			completion: { result in
 				switch result {
 				case .success(let items):
@@ -156,9 +153,6 @@ extension MediaLibraryService: MediaLibraryServiceProtocol {
 			type: MediaLibraryItemDTO.self,
 			nestedAt: "collection.items",
 			route: .search(keyword: keyword, page: page),
-			responseHandler: { response in
-				AstraCoreAPI.coreAPI().updateRateLimitRemaining(response: response)
-			},
 			completion: { result in
 				switch result {
 				case .success(let items):
@@ -184,9 +178,6 @@ extension MediaLibraryService: MediaLibraryServiceProtocol {
 			type: MediaAssetItemDTO.self,
 			nestedAt: "collection.items",
 			route: .asset(nasaId: id),
-			responseHandler: { response in
-				AstraCoreAPI.coreAPI().updateRateLimitRemaining(response: response)
-			},
 			completion: { result in
 				switch result {
 				case .success(let items):

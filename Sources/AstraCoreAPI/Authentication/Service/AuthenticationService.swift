@@ -4,43 +4,119 @@
 //
 
 import AstraCoreModels
+import Firebase
 import Foundation
+import GoogleSignIn
 import KyuGenericExtensions
 
-struct AuthenticationService {
+public struct AuthenticationService: AuthenticationServiceProtocol {
+	public static var moduleName: String = "AstraCoreAPI.MediaLibraryService"
+	public init() {}
+	
+	let userService = UserService()
 }
 
-extension AuthenticationService: AuthenticationServiceProtocol {
+public extension AuthenticationService {
 	func sessionStatus(completion: @escaping (AuthenticationSessionStatusType) -> Void) {
-		if let apiKey = Keychain.keychain().get(KeychainKeyType.apiKey.rawValue) {
-			completion(
-				.signedIn(
-					apiKey: apiKey,
-					rateLimit: AstraCoreAPI.coreAPI().rateLimit,
-					rateLimitRemaining: AstraCoreAPI.coreAPI().rateLimitRemaining
-				)
-			)
+		if let currentUser = Auth.auth().currentUser {
+			let group = DispatchGroup()
+			let userId = currentUser.uid
+			
+			if AstraCoreAPI.coreAPI().user == nil {
+				group.enter()
+				userService.getUser(by: userId) { result in
+					switch result {
+					case .success(let user):
+						AstraCoreAPI.coreAPI().user = user
+					case .failure:
+						AstraCoreAPI.coreAPI().user = User(item: currentUser)
+					}
+					group.leave()
+				}
+			}
+			
+			if AstraCoreAPI.coreAPI().userSecret == nil {
+				group.enter()
+				userService.getUserSecret(by: userId) { result in
+					switch result {
+					case .success(let userSecret):
+						AstraCoreAPI.coreAPI().userSecret = userSecret
+					case .failure:
+						AstraCoreAPI.coreAPI().userSecret = nil
+					}
+					group.leave()
+				}
+			}
+			
+			group.notify(queue: .main) {
+				if let user = AstraCoreAPI.coreAPI().user {
+					completion(.signedIn(user: user))
+				} else {
+					completion(.signedOut)
+				}
+			}
 		} else {
 			completion(.signedOut)
 		}
 	}
 	
-	func signIn(apiKey: String, completion: @escaping (Result<Bool, Error>) -> Void) {
-		let mediaLibraryService = MediaLibraryService(apiKey: apiKey)
-		mediaLibraryService.astromonyPictureOfTheDay(count: 1) { result in
-			switch result {
-			case .success:
-				Keychain.keychain().set(apiKey, forKey: KeychainKeyType.apiKey.rawValue)
-				completion(.success(true))
-			case .failure(let error):
-				Keychain.keychain().delete(KeychainKeyType.apiKey.rawValue)
+	func signInWithGoogle(
+		presenting: UIViewController,
+		completion: @escaping (Result<AuthenticationSessionStatusType, Error>) -> Void
+	) {
+		guard let clientID = FirebaseApp.app()?.options.clientID else { return }
+		let configuration = GIDConfiguration(clientID: clientID)
+		GIDSignIn.sharedInstance.signIn(
+			with: configuration,
+			presenting: presenting
+		) { user, error in
+			if let error = error {
 				completion(.failure(error))
+				return
 			}
+			
+			guard let authentication = user?.authentication,
+				  let idToken = authentication.idToken
+			else {
+				let error = AuthenticationServiceError(
+					statusCode: 0,
+					message: "AuthenticationService: IDToken not found."
+				)
+				completion(.failure(error))
+				return
+			}
+			
+			let credential = GoogleAuthProvider.credential(
+				withIDToken: idToken,
+				accessToken: authentication.accessToken
+			)
+			
+			signIn(credential: credential, completion: completion)
 		}
 	}
 	
 	func signOut(completion: @escaping () -> Void) {
-		Keychain.keychain().delete(KeychainKeyType.apiKey.rawValue)
+		try? Auth.auth().signOut()
+		AstraCoreAPI.coreAPI().user = nil
+		AstraCoreAPI.coreAPI().userSecret = nil
 		completion()
+	}
+}
+
+private extension AuthenticationService {
+	func signIn(
+		credential: AuthCredential,
+		completion: @escaping (Result<AuthenticationSessionStatusType, Error>) -> Void
+	) {
+		Auth.auth().signIn(with: credential) { _, error in
+			if let error = error {
+				completion(.failure(error))
+				return
+			}
+			
+			sessionStatus { status in
+				completion(.success(status))
+			}
+		}
 	}
 }

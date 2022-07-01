@@ -4,14 +4,23 @@
 //
 
 import AstraCoreModels
-import FirebaseCore
+import Firebase
+import FirebaseFirestore
 import Foundation
+import GoogleSignIn
 import KeychainSwift
 import KyuGenericExtensions
 import KyuNetworkExtensions
 import Moya
+import UIKit
 
 public class AstraCoreAPI {
+	public enum Environment {
+		case develop
+		case staging
+		case production
+	}
+	
 	// MARK: Instance
 	private init() {}
 	private static let shared = AstraCoreAPI()
@@ -20,43 +29,47 @@ public class AstraCoreAPI {
 		return shared
 	}
 	
-	// MARK: Properties
-	public var rateLimit = 0
-	public var rateLimitRemaining = 0
-	
-	private var apiKey: String {
-		Keychain.keychain().get(KeychainKeyType.apiKey.rawValue) ?? ""
+	// MARK: Configuration
+	public func configure(environment: Environment, googleServiceInfo plistPath: String) {
+		self.environment = environment
+		self.googleServiceInfoPlistPath = plistPath
 	}
 	
-	// MARK: Configuration
-	public func configure(googleServiceInfo plistPath: String) {
-		if let options = FirebaseOptions(contentsOfFile: plistPath) {
+	public func application(
+		_ application: UIApplication,
+		didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
+	) -> Bool {
+		if let options = FirebaseOptions(contentsOfFile: googleServiceInfoPlistPath) {
 			FirebaseApp.configure(options: options)
 		}
-	}
-	
-	public func updateRateLimitRemaining(response: Response) {
-		if let rateLimitString = response.response?.value(
-			forHTTPHeaderField: "X-RateLimit-Limit"
-		) {
-			rateLimit = Int(rateLimitString) ?? 0
-		}
 		
-		if let rateLimitRemainingString = response.response?.value(
-			forHTTPHeaderField: "X-RateLimit-Remaining"
-		) {
-			rateLimitRemaining = Int(rateLimitRemainingString) ?? 0
-		}
-	}
-}
-
-public extension AstraCoreAPI {
-	func authenticationService() -> AuthenticationServiceProtocol {
-		return AuthenticationService()
+		return true
 	}
 	
-	func mediaLibraryService() -> MediaLibraryServiceProtocol {
-		return MediaLibraryService(apiKey: apiKey)
+	public func application(
+		_ application: UIApplication,
+		open url: URL,
+		options: [UIApplication.OpenURLOptionsKey: Any] = [:]
+	) -> Bool {
+		return GIDSignIn.sharedInstance.handle(url)
+	}
+	
+	// MARK: Variables
+	public var environment: Environment = .production
+	public var googleServiceInfoPlistPath = ""
+	
+	public var user: UserProtocol?
+	public var userSecret: UserSecretProtocol? {
+		didSet {
+			if let userSecret = userSecret {
+				Keychain.keychain().set(
+					userSecret.dataGovAPIKey,
+					forKey: KeychainKeyType.dataGovAPIKey.rawValue
+				)
+			} else {
+				Keychain.keychain().delete(KeychainKeyType.dataGovAPIKey.rawValue)
+			}
+		}
 	}
 }
 
