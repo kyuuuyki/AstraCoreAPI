@@ -24,10 +24,6 @@ let package = Package(
 			branch: "main"
 		),
 		.package(
-			url: "https://github.com/evgenyneu/keychain-swift.git",
-			from: "20.0.0"
-		),
-		.package(
 			url: "https://github.com/firebase/firebase-ios-sdk.git",
 			from: "8.10.0"
 		),
@@ -42,10 +38,6 @@ let package = Package(
 			dependencies: [
 				"AstraCoreModels",
 				"KyuNetworkExtensions",
-				.product(
-					name: "KeychainSwift",
-					package: "keychain-swift"
-				),
 				.product(
 					name: "FirebaseAnalytics",
 					package: "firebase-ios-sdk"

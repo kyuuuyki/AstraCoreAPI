@@ -8,7 +8,6 @@ import Firebase
 import FirebaseFirestore
 import Foundation
 import GoogleSignIn
-import KeychainSwift
 import KyuGenericExtensions
 import KyuNetworkExtensions
 import Moya
@@ -59,23 +58,5 @@ public class AstraCoreAPI {
 	public var googleServiceInfoPlistPath = ""
 	
 	public var user: UserProtocol?
-	public var userSecret: UserSecretProtocol? {
-		didSet {
-			if let userSecret = userSecret {
-				Keychain.keychain().set(
-					userSecret.dataGovAPIKey,
-					forKey: KeychainKeyType.dataGovAPIKey.rawValue
-				)
-			} else {
-				Keychain.keychain().delete(KeychainKeyType.dataGovAPIKey.rawValue)
-			}
-		}
-	}
-}
-
-class Keychain {
-	static let shared = KeychainSwift()
-	static func keychain() -> KeychainSwift {
-		return shared
-	}
+	public var userSecret: UserSecretProtocol?
 }

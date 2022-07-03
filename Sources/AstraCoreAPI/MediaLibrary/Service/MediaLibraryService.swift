@@ -31,12 +31,16 @@ public struct MediaLibraryService: MediaLibraryServiceProtocol {
 		self.apiKey = apiKey
 		self.provider = provider
 	}
-}
-
-public extension MediaLibraryService {
-	func astromonyPictureOfTheDay(
+	
+	// MARK: - GET APOD
+	public enum GetAPODError: Error {
+		case notFound
+	}
+	public func getAPOD(
 		date: Date,
-		completion: @escaping (Result<MediaLibraryAPODItemProtocol?, Error>) -> Void
+		completion: @escaping (
+			Result<MediaLibraryAPODItemProtocol, Error>
+		) -> Void
 	) {
 		provider.requestObject(
 			type: MediaLibraryAPODItemDTO.self,
@@ -44,10 +48,10 @@ public extension MediaLibraryService {
 			completion: { result in
 				switch result {
 				case .success(let item):
-					if let item = item {
-						completion(.success(MediaLibraryAPODItem(item: item)))
+					if let item = item, let apodItem = MediaLibraryAPODItem(item: item) {
+						completion(.success(apodItem))
 					} else {
-						completion(.success(nil))
+						completion(.failure(GetAPODError.notFound))
 					}
 				case .failure(let error):
 					completion(.failure(error))
@@ -56,9 +60,12 @@ public extension MediaLibraryService {
 		)
 	}
 	
-	func astromonyPictureOfTheDay(
+	// MARK: - GET APOD LIST
+	public func getAPODList(
 		count: Int,
-		completion: @escaping (Result<[MediaLibraryAPODItemProtocol], Error>) -> Void
+		completion: @escaping (
+			Result<[MediaLibraryAPODItemProtocol], Error>
+		) -> Void
 	) {
 		provider.requestObjects(
 			type: MediaLibraryAPODItemDTO.self,
@@ -80,8 +87,11 @@ public extension MediaLibraryService {
 		)
 	}
 	
-	func suggestedCategories(
-		completion: @escaping (Result<[MediaLibraryCategoryProtocol], Error>) -> Void
+	// MARK: - GET SUGGESTED CATEGORY LIST
+	public func getSuggestedCategoryList(
+		completion: @escaping (
+			Result<[MediaLibraryCategoryProtocol], Error>
+		) -> Void
 	) {
 		provider.requestObjects(
 			type: MediaLibraryCategoryDTO.self,
@@ -102,7 +112,12 @@ public extension MediaLibraryService {
 		}
 	}
 	
-	func recent(completion: @escaping (Result<[MediaLibraryItemProtocol], Error>) -> Void) {
+	// MARK: - GET RECENT MEDIA LIST
+	public func getRecentMediaList(
+		completion: @escaping (
+			Result<[MediaLibraryItemProtocol], Error>
+		) -> Void
+	) {
 		provider.requestObjects(
 			type: MediaLibraryItemDTO.self,
 			nestedAt: "collection.items",
@@ -123,7 +138,12 @@ public extension MediaLibraryService {
 		}
 	}
 	
-	func popular(completion: @escaping (Result<[MediaLibraryItemProtocol], Error>) -> Void) {
+	// MARK: - GET POPULAR MEDIA LIST
+	public func getPopularMediaList(
+		completion: @escaping (
+			Result<[MediaLibraryItemProtocol], Error>
+		) -> Void
+	) {
 		provider.requestObjects(
 			type: MediaLibraryItemDTO.self,
 			nestedAt: "collection.items",
@@ -144,10 +164,13 @@ public extension MediaLibraryService {
 		}
 	}
 	
-	func search(
+	// MARK: - GET MEDIA LIST NY KEYWORD
+	public func getMediaListByKeyword(
 		keyword: String,
 		page: Int?,
-		completion: @escaping (Result<[MediaLibraryItemProtocol], Error>) -> Void
+		completion: @escaping (
+			Result<[MediaLibraryItemProtocol], Error>
+		) -> Void
 	) {
 		provider.requestObjects(
 			type: MediaLibraryItemDTO.self,
@@ -170,9 +193,12 @@ public extension MediaLibraryService {
 		)
 	}
 	
-	func asset(
+	// MARK: - GET ASSET LIST BY MEDIA ID
+	public func getAssetListByMediaId(
 		id: String,
-		completion: @escaping (Result<[MediaLibraryAssetItemProtocol], Error>) -> Void
+		completion: @escaping (
+			Result<[MediaLibraryAssetItemProtocol], Error>
+		) -> Void
 	) {
 		provider.requestObjects(
 			type: MediaAssetItemDTO.self,

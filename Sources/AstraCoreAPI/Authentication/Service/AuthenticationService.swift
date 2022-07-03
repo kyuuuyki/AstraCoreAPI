@@ -13,11 +13,10 @@ public struct AuthenticationService: AuthenticationServiceProtocol {
 	public static var moduleName: String = "AstraCoreAPI.MediaLibraryService"
 	public init() {}
 	
-	let userService = UserService()
-}
-
-public extension AuthenticationService {
-	func sessionStatus(completion: @escaping (AuthenticationSessionStatusType) -> Void) {
+	private let userService = UserService()
+	
+	// MARK: - GET SESSION STATUS
+	public func getSessionStatus(completion: @escaping (AuthenticationSessionStatusType) -> Void) {
 		if let currentUser = Auth.auth().currentUser {
 			let group = DispatchGroup()
 			let userId = currentUser.uid
@@ -60,9 +59,15 @@ public extension AuthenticationService {
 		}
 	}
 	
-	func signInWithGoogle(
+	// MARK: - SIGN IN WITH GOOGLE
+	public enum SignInWithGoogleError: Error {
+		case idTokenNotFound
+	}
+	public func signInWithGoogle(
 		presenting: UIViewController,
-		completion: @escaping (Result<AuthenticationSessionStatusType, Error>) -> Void
+		completion: @escaping (
+			Result<AuthenticationSessionStatusType, Error>
+		) -> Void
 	) {
 		guard let clientID = FirebaseApp.app()?.options.clientID else { return }
 		let configuration = GIDConfiguration(clientID: clientID)
@@ -78,11 +83,7 @@ public extension AuthenticationService {
 			guard let authentication = user?.authentication,
 				  let idToken = authentication.idToken
 			else {
-				let error = AuthenticationServiceError(
-					statusCode: 0,
-					message: "AuthenticationService: IDToken not found."
-				)
-				completion(.failure(error))
+				completion(.failure(SignInWithGoogleError.idTokenNotFound))
 				return
 			}
 			
@@ -95,7 +96,8 @@ public extension AuthenticationService {
 		}
 	}
 	
-	func signOut(completion: @escaping () -> Void) {
+	// MARK: - SIGN OUT
+	public func signOut(completion: @escaping () -> Void) {
 		try? Auth.auth().signOut()
 		AstraCoreAPI.coreAPI().user = nil
 		AstraCoreAPI.coreAPI().userSecret = nil
@@ -106,7 +108,9 @@ public extension AuthenticationService {
 private extension AuthenticationService {
 	func signIn(
 		credential: AuthCredential,
-		completion: @escaping (Result<AuthenticationSessionStatusType, Error>) -> Void
+		completion: @escaping (
+			Result<AuthenticationSessionStatusType, Error>
+		) -> Void
 	) {
 		Auth.auth().signIn(with: credential) { _, error in
 			if let error = error {
@@ -114,7 +118,7 @@ private extension AuthenticationService {
 				return
 			}
 			
-			sessionStatus { status in
+			getSessionStatus { status in
 				completion(.success(status))
 			}
 		}
