@@ -4,6 +4,7 @@
 //
 
 import AstraCoreModels
+import FacebookLogin
 import Firebase
 import Foundation
 import GoogleSignIn
@@ -59,6 +60,35 @@ public struct AuthenticationService: AuthenticationServiceProtocol {
 		}
 	}
 	
+	// MARK: - SIGN IN WITH FACEBOOK
+	public enum SignInWithFacebookError: Error {
+		case tokenStringNotFound
+		case cancelled
+	}
+	public func signInWithFacebook(
+		presenting: UIViewController,
+		completion: @escaping (
+			Result<AuthenticationSessionStatusType, Error>
+		) -> Void
+	) {
+		let loginManager = LoginManager()
+		loginManager.logIn(permissions: ["public_profile"], from: presenting) { result, error in
+			if let error = error {
+				completion(.failure(error))
+			} else if let result = result, result.isCancelled {
+				completion(.failure(SignInWithFacebookError.cancelled))
+			} else {
+				guard let tokenString = AccessToken.current?.tokenString else {
+					completion(.failure(SignInWithFacebookError.tokenStringNotFound))
+					return
+				}
+				
+				let credential = FacebookAuthProvider.credential(withAccessToken: tokenString)
+				signIn(credential: credential, completion: completion)
+			}
+		}
+	}
+	
 	// MARK: - SIGN IN WITH GOOGLE
 	public enum SignInWithGoogleError: Error {
 		case idTokenNotFound
@@ -91,7 +121,6 @@ public struct AuthenticationService: AuthenticationServiceProtocol {
 				withIDToken: idToken,
 				accessToken: authentication.accessToken
 			)
-			
 			signIn(credential: credential, completion: completion)
 		}
 	}

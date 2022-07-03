@@ -4,6 +4,7 @@
 //
 
 import AstraCoreModels
+import FacebookCore
 import Firebase
 import FirebaseFirestore
 import Foundation
@@ -38,6 +39,13 @@ public class AstraCoreAPI {
 		_ application: UIApplication,
 		didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
 	) -> Bool {
+		// Facebook
+		ApplicationDelegate.shared.application(
+			application,
+			didFinishLaunchingWithOptions: launchOptions
+		)
+		
+		// Firebase
 		if let options = FirebaseOptions(contentsOfFile: googleServiceInfoPlistPath) {
 			FirebaseApp.configure(options: options)
 		}
@@ -50,7 +58,32 @@ public class AstraCoreAPI {
 		open url: URL,
 		options: [UIApplication.OpenURLOptionsKey: Any] = [:]
 	) -> Bool {
-		return GIDSignIn.sharedInstance.handle(url)
+		// Facebook
+		ApplicationDelegate.shared.application(
+			application,
+			open: url,
+			sourceApplication: options[UIApplication.OpenURLOptionsKey.sourceApplication] as? String,
+			annotation: options[UIApplication.OpenURLOptionsKey.annotation]
+		)
+		
+		// Firebase
+		GIDSignIn.sharedInstance.handle(url)
+		
+		return true
+	}
+	
+	public func scene(_ scene: UIScene, openURLContexts URLContexts: Set<UIOpenURLContext>) {
+		guard let url = URLContexts.first?.url else {
+			return
+		}
+		
+		// Facebook
+		ApplicationDelegate.shared.application(
+			UIApplication.shared,
+			open: url,
+			sourceApplication: nil,
+			annotation: [UIApplication.OpenURLOptionsKey.annotation]
+		)
 	}
 	
 	// MARK: Variables

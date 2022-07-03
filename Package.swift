@@ -25,12 +25,16 @@ let package = Package(
 		),
 		.package(
 			url: "https://github.com/firebase/firebase-ios-sdk.git",
-			from: "8.10.0"
+			from: "9.2.0"
 		),
 		.package(
 			url: "https://github.com/google/GoogleSignIn-iOS.git",
 			from: "6.2.0"
 		),
+		.package(
+			url: "https://github.com/facebook/facebook-ios-sdk.git",
+			from: "14.0.0"
+		)
 	],
 	targets: [
 		.target(
@@ -38,10 +42,6 @@ let package = Package(
 			dependencies: [
 				"AstraCoreModels",
 				"KyuNetworkExtensions",
-				.product(
-					name: "FirebaseAnalytics",
-					package: "firebase-ios-sdk"
-				),
 				.product(
 					name: "FirebaseAuth",
 					package: "firebase-ios-sdk"
@@ -51,12 +51,16 @@ let package = Package(
 					package: "firebase-ios-sdk"
 				),
 				.product(
-					name: "FirebaseFirestoreSwift-Beta",
+					name: "FirebaseFirestoreSwift",
 					package: "firebase-ios-sdk"
 				),
 				.product(
 					name: "GoogleSignIn",
 					package: "GoogleSignIn-iOS"
+				),
+				.product(
+					name: "FacebookLogin",
+					package: "facebook-ios-sdk"
 				),
 			]
 		),
