@@ -194,7 +194,7 @@ public struct MediaLibraryService: MediaLibraryServiceProtocol {
 	}
 	
 	// MARK: - GET ASSET LIST BY MEDIA ID
-	public func getAssetListByMediaId(
+	public func getAssetListByMediaID(
 		id: String,
 		completion: @escaping (
 			Result<[MediaLibraryAssetItemProtocol], Error>

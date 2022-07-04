@@ -25,15 +25,15 @@ let package = Package(
 		),
 		.package(
 			url: "https://github.com/firebase/firebase-ios-sdk.git",
-			from: "9.2.0"
+			"9.2.0" ..< "9.3.0"
 		),
 		.package(
 			url: "https://github.com/google/GoogleSignIn-iOS.git",
-			from: "6.2.0"
+			"6.0.0" ..< "6.1.0"
 		),
 		.package(
 			url: "https://github.com/facebook/facebook-ios-sdk.git",
-			from: "14.0.0"
+			"14.0.0" ..< "14.1.0"
 		)
 	],
 	targets: [

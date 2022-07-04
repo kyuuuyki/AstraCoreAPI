@@ -30,46 +30,17 @@ public struct UserService: UserServiceProtocol {
 		self.userSecretCollection = database.collection("userSecrets")
 	}
 	
-	// MARK: - ADD USER
-	public enum AddUserError: Error {
-		case dataGovAPIKeyInvalid
-	}
-	public func addUser(
+	// MARK: - SET USER
+	public func setUser(
 		user: UserProtocol,
-		userSecret: UserSecretProtocol,
 		completion: @escaping (Result<UserProtocol, Error>) -> Void
 	) {
-		let group = DispatchGroup()
-		
-		group.enter()
-		var isDataGovAPIKeyValid = false
-		verifyDataGovAPIKey(apiKey: userSecret.dataGovAPIKey) { validationResult in
-			isDataGovAPIKeyValid = validationResult
-			group.leave()
-		}
-		
-		group.notify(queue: .main) {
-			guard isDataGovAPIKeyValid else {
-				completion(.failure(AddUserError.dataGovAPIKeyInvalid))
+		userCollection.document(user.id).setData(UserDTO(item: user).toJSON()) { error in
+			if let error = error {
+				completion(.failure(error))
 				return
 			}
-			
-			userCollection.document(user.id).setData(UserDTO(item: user).toJSON()) { error in
-				if let error = error {
-					completion(.failure(error))
-					return
-				}
-				
-				userSecretCollection.document(user.id).setData(
-					UserSecretDTO(item: userSecret).toJSON()
-				) { error in
-					if let error = error {
-						completion(.failure(error))
-						return
-					}
-					completion(.success(user))
-				}
-			}
+			completion(.success(user))
 		}
 	}
 	
@@ -78,10 +49,10 @@ public struct UserService: UserServiceProtocol {
 		case notFound
 	}
 	public func getUser(
-		by userId: String,
+		by userID: String,
 		completion: @escaping (Result<UserProtocol, Error>) -> Void
 	) {
-		userCollection.document(userId).getDocument(as: UserDTO.self) { result in
+		userCollection.document(userID).getDocument(as: UserDTO.self) { result in
 			switch result {
 			case .success(let item):
 				if let user = User(item: item) {
@@ -95,17 +66,47 @@ public struct UserService: UserServiceProtocol {
 		}
 	}
 	
+	// MARK: - DELETE USER
+	public func deleteUser(
+		by userID: String,
+		completion: @escaping (Result<Void, Error>) -> Void
+	) {
+		userCollection.document(userID).delete { error in
+			if let error = error {
+				completion(.failure(error))
+			} else {
+				completion(.success(()))
+			}
+		}
+	}
+	
+	// MARK: - SET USER SECRET
+	public func setUserSecret(
+		userSecret: UserSecretProtocol,
+		completion: @escaping (Result<UserSecretProtocol, Error>) -> Void
+	) {
+		userSecretCollection.document(userSecret.id).setData(
+			UserSecretDTO(item: userSecret).toJSON()
+		) { error in
+			if let error = error {
+				completion(.failure(error))
+				return
+			}
+			completion(.success(userSecret))
+		}
+	}
+	
 	// MARK: - GET USER SECRET
 	public enum GetUserSecretError: Error {
 		case notFound
 	}
 	public func getUserSecret(
-		by userId: String,
+		by userID: String,
 		completion: @escaping (
 			Result<UserSecretProtocol, Error>
 		) -> Void
 	) {
-		userSecretCollection.document(userId).getDocument(as: UserSecretDTO.self) { result in
+		userSecretCollection.document(userID).getDocument(as: UserSecretDTO.self) { result in
 			switch result {
 			case .success(let item):
 				if let userSecret = UserSecret(item: item) {
@@ -118,35 +119,17 @@ public struct UserService: UserServiceProtocol {
 			}
 		}
 	}
-}
-
-extension UserService {
-	func updateUser(
-		user: UserProtocol,
-		completion: @escaping (Result<UserProtocol, Error>) -> Void
+	
+	// MARK: - DELETE USER SECRET
+	public func deleteUserSecret(
+		by userID: String,
+		completion: @escaping (Result<Void, Error>) -> Void
 	) {
-		userCollection.document(user.id).setData(UserDTO(item: user).toJSON()) { error in
+		userSecretCollection.document(userID).delete { error in
 			if let error = error {
 				completion(.failure(error))
-				return
-			}
-			completion(.success(user))
-		}
-	}
-}
-
-private extension UserService {
-	func verifyDataGovAPIKey(
-		apiKey: String,
-		completion: @escaping (Bool) -> Void
-	) {
-		let mediaLibraryService = MediaLibraryService(apiKey: apiKey)
-		mediaLibraryService.getAPODList(count: 1) { result in
-			switch result {
-			case .success(let apodItems):
-				completion(!apodItems.isEmpty)
-			case .failure:
-				completion(false)
+			} else {
+				completion(.success(()))
 			}
 		}
 	}
