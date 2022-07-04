@@ -120,6 +120,21 @@ public struct UserService: UserServiceProtocol {
 	}
 }
 
+extension UserService {
+	func updateUser(
+		user: UserProtocol,
+		completion: @escaping (Result<UserProtocol, Error>) -> Void
+	) {
+		userCollection.document(user.id).setData(UserDTO(item: user).toJSON()) { error in
+			if let error = error {
+				completion(.failure(error))
+				return
+			}
+			completion(.success(user))
+		}
+	}
+}
+
 private extension UserService {
 	func verifyDataGovAPIKey(
 		apiKey: String,

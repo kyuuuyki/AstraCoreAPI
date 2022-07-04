@@ -10,6 +10,8 @@ import Foundation
 import GoogleSignIn
 import KyuGenericExtensions
 
+private let profileImageSize = CGSize(width: 640, height: 640)
+
 public struct AuthenticationService: AuthenticationServiceProtocol {
 	public static var moduleName: String = "AstraCoreAPI.MediaLibraryService"
 	public init() {}
@@ -72,7 +74,10 @@ public struct AuthenticationService: AuthenticationServiceProtocol {
 		) -> Void
 	) {
 		let loginManager = LoginManager()
-		loginManager.logIn(permissions: ["public_profile"], from: presenting) { result, error in
+		loginManager.logIn(
+			permissions: ["email", "public_profile"],
+			from: presenting
+		) { result, error in
 			if let error = error {
 				completion(.failure(error))
 			} else if let result = result, result.isCancelled {
@@ -147,9 +152,72 @@ private extension AuthenticationService {
 				return
 			}
 			
-			getSessionStatus { status in
-				completion(.success(status))
+			let group = DispatchGroup()
+			group.enter()
+			updateCurrentUserData(credential: credential) {
+				group.leave()
 			}
+			
+			group.notify(queue: .main) {
+				getSessionStatus { status in
+					completion(.success(status))
+				}
+			}
+		}
+	}
+	
+	func updateCurrentUserData(credential: AuthCredential, completion: @escaping () -> Void) {
+		if let currentUser = Auth.auth().currentUser, let user = User(item: currentUser) {
+			var email: String?
+			var imageUrl: URL?
+			switch credential.provider {
+			case "google.com":
+				email = user.email
+				imageUrl = GIDSignIn
+					.sharedInstance
+					.currentUser?
+					.profile?
+					.imageURL(withDimension: UInt(profileImageSize.height))
+			case "facebook.com":
+				for data in currentUser.providerData where !(data.email?.isEmpty ?? true) {
+					email = data.email
+					break
+				}
+				if let url = user.imageUrl {
+					let queryItems = [
+						URLQueryItem(
+							name: "access_token",
+							value: AccessToken.current?.tokenString
+						),
+						URLQueryItem(
+							name: "width",
+							value: "\(UInt(profileImageSize.width))"
+						),
+						URLQueryItem(
+							name: "height",
+							value: "\(UInt(profileImageSize.height))"
+						),
+					]
+					var urlComps = URLComponents(url: url, resolvingAgainstBaseURL: true)
+					urlComps?.queryItems = queryItems
+					imageUrl = urlComps?.url
+				}
+			default:
+				break
+			}
+			
+			let updatedUser = User(
+				id: user.id,
+				displayName: user.displayName,
+				email: email,
+				imageUrl: imageUrl
+			)
+			
+			userService.updateUser(user: updatedUser) { _ in
+				completion()
+			}
+		} else {
+			completion()
 		}
 	}
 }
